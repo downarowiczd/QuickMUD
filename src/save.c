@@ -190,7 +190,7 @@ void fwrite_char (CHAR_DATA * ch, FILE * fp)
     if (ch->description[0] != '\0')
         fprintf (fp, "Desc %s~\n", ch->description);
     if (ch->prompt != NULL || !str_cmp (ch->prompt, "<%hhp %mm %vmv> ")
-        || !str_cmp (ch->prompt, "{c<%hhp %mm %vmv>{x "))
+        || !str_cmp (ch->prompt, DEFAULT_PROMPT))
         fprintf (fp, "Prom %s~\n", ch->prompt);
     fprintf (fp, "Race %s~\n", pc_race_table[ch->race].name);
     if (ch->clan)
@@ -671,7 +671,7 @@ bool load_char_obj (DESCRIPTOR_DATA * d, char *name)
     ch->race = race_lookup ("human");
     ch->act = PLR_NOSUMMON;
     ch->comm = COMM_COMBINE | COMM_PROMPT;
-    ch->prompt = str_dup ("<%hhp %mm %vmv> ");
+    ch->prompt = str_dup (DEFAULT_PROMPT);
     ch->pcdata->confirm_delete = FALSE;
 	ch->pcdata->board = &boards[DEFAULT_BOARD];
     ch->pcdata->pwd = str_dup ("");

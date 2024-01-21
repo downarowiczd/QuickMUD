@@ -114,7 +114,11 @@ typedef bool SPEC_FUN  args( ( CHAR_DATA *ch ) );
 typedef void SPELL_FUN args( ( int sn, int level, CHAR_DATA *ch, void *vo,
                 int target ) );
 
+/*
+ * Default Prompt
+ */
 
+#define DEFAULT_PROMPT "{c<%hhp %mm %vmv>{x "
 
 /*
  * String and memory management parameters.
