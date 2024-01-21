@@ -7,6 +7,8 @@ CC = gcc
 RM = rm
 EXE = rom
 PROF = -O -g3
+CP = cp
+AREA = ../area/
 
 C_FLAGS = $(PROF) -Wall -fcommon
 L_FLAGS = $(PROF) -lcrypt
@@ -29,8 +31,16 @@ rom: $(OBJ_FILES)
 	$(RM) -f $(EXE)
 	$(CC) -o $(EXE) $(OBJ_FILES) $(L_FLAGS)
 
+copy:
+	$(CP) $(EXE) $(AREA)
+
 $(OBJ_DIR)/%.o: %.c
 	$(CC) $(C_FLAGS) -c -o $@ $<
+
+run:
+	make clean
+	make
+	make copy
 
 clean:
 	$(RM) -f $(OBJ_FILES) $(EXE) *~ *.bak *.orig *.rej
