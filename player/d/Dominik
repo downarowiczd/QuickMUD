@@ -1,0 +1,357 @@
+#PLAYER
+Nm          Dominik~
+ShtDsc      ~
+LngDsc      ~
+Dscr        ~
+Prmpt       <{o{y%hhp {c%mm {g%vmv{x> ~
+Sx          1
+Class       Warrior~ ~
+Race        Halfelf~
+Lvl         2
+Trst        0
+Playd       1624
+Board       0 'general'
+Board       0 'ideas'
+Board       0 'announce'
+Board       0 'bugs'
+Board       0 'personal'
+Room        3713
+HpMnMv      33 36 100 100 110 110
+Gold        5554
+Exp         2672
+ActF        blank combine prompt colour pager~
+AffectedBy  ~
+Langs       0 0
+Pos         7
+Prac        2
+SavThr      -4
+Align       1000
+Hit         4
+Dam         1
+Armr        64
+Wimp        4
+Deaf        0
+Paswd       Doc9PYCYNwYc2~
+Bmfin       ~
+Bmfout      ~
+Immskll     ~
+Wiznet      0
+Ttle         the Recruit~
+AtrPrm      18 13 13 13 16
+AtrMd       0 0 0 0 0
+Cond        0 0 0
+Security    0
+MKills      13
+MDeaths     0
+Pglen       20
+Affect                  bless~   7  -3 saving-spell~ ~
+Affect                  bless~   7   3 hitroll~ ~
+End
+
+#OBJ
+Nest         0
+Name         banner~
+ShortDescr   a war banner~
+Description  A war banner is on the floor here.~
+Vnum         3716
+ExtraFlags   glow magic~
+WearFlags    1
+WearLoc      0
+ItemType     1
+Weight       1
+Level        0
+Timer        -1
+Cost         4
+Values       0 0 -1 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub vest~
+ShortDescr   a sub issue vest~
+Description  You see a sub issue vest here.~
+Vnum         3703
+ExtraFlags   ~
+WearFlags    9
+WearLoc      5
+ItemType     9
+Weight       5
+Level        0
+Timer        -1
+Cost         5
+Values       3 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub shield~
+ShortDescr   a sub issue shield~
+Description  You see a sub issue shield here.~
+Vnum         3704
+ExtraFlags   ~
+WearFlags    513
+WearLoc      11
+ItemType     9
+Weight       5
+Level        0
+Timer        -1
+Cost         4
+Values       3 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub sword~
+ShortDescr   a sub issue sword~
+Description  You see a sub issue sword here.~
+Vnum         3702
+ExtraFlags   magic~
+WearFlags    8193
+WearLoc      16
+ItemType     5
+Weight       5
+Level        0
+Timer        -1
+Cost         5
+Values       0 2 7 3 0
+End
+
+#OBJ
+Nest         0
+Name         sub leggings~
+ShortDescr   a pair of sub issue leggings~
+Description  You see a pair of sub issue leggings here.~
+Vnum         3707
+ExtraFlags   ~
+WearFlags    33
+WearLoc      7
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         4
+Values       2 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub belt~
+ShortDescr   a sub issue belt~
+Description  You see a sub issue belt here.~
+Vnum         3712
+ExtraFlags   ~
+WearFlags    2049
+WearLoc      13
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         4
+Values       2 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub leggings~
+ShortDescr   a pair of sub issue leggings~
+Description  You see a pair of sub issue leggings here.~
+Vnum         3707
+ExtraFlags   ~
+WearFlags    33
+WearLoc      -1
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         8
+Values       1 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub belt~
+ShortDescr   a sub issue belt~
+Description  You see a sub issue belt here.~
+Vnum         3712
+ExtraFlags   ~
+WearFlags    2049
+WearLoc      -1
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         3
+Values       2 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub leggings~
+ShortDescr   a pair of sub issue leggings~
+Description  You see a pair of sub issue leggings here.~
+Vnum         3707
+ExtraFlags   ~
+WearFlags    33
+WearLoc      -1
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         4
+Values       3 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub belt~
+ShortDescr   a sub issue belt~
+Description  You see a sub issue belt here.~
+Vnum         3712
+ExtraFlags   ~
+WearFlags    2049
+WearLoc      -1
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         5
+Values       2 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub helmet~
+ShortDescr   a sub issue helmet~
+Description  You see a sub issue helmet here.~
+Vnum         3706
+ExtraFlags   ~
+WearFlags    17
+WearLoc      6
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         6
+Values       3 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub cape~
+ShortDescr   a sub issue cape~
+Description  You see a sub issue cape here.~
+Vnum         3711
+ExtraFlags   ~
+WearFlags    1025
+WearLoc      12
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         4
+Values       2 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub cloak~
+ShortDescr   a sub issue cloak~
+Description  You see a sub issue cloak here.~
+Vnum         3705
+ExtraFlags   ~
+WearFlags    5
+WearLoc      4
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         4
+Values       1 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub cloak~
+ShortDescr   a sub issue cloak~
+Description  You see a sub issue cloak here.~
+Vnum         3705
+ExtraFlags   ~
+WearFlags    5
+WearLoc      3
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         3
+Values       2 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub boots~
+ShortDescr   a pair of sub issue boots~
+Description  You see a pair of sub issue boots here.~
+Vnum         3708
+ExtraFlags   ~
+WearFlags    65
+WearLoc      8
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         5
+Values       2 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub bracer~
+ShortDescr   a sub issue bracer~
+Description  You see a sub issue bracer here.~
+Vnum         3713
+ExtraFlags   ~
+WearFlags    4097
+WearLoc      14
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         12
+Values       2 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub leggings~
+ShortDescr   a pair of sub issue leggings~
+Description  You see a pair of sub issue leggings here.~
+Vnum         3707
+ExtraFlags   ~
+WearFlags    33
+WearLoc      -1
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         4
+Values       2 0 0 0 0
+End
+
+#OBJ
+Nest         0
+Name         sub belt~
+ShortDescr   a sub issue belt~
+Description  You see a sub issue belt here.~
+Vnum         3712
+ExtraFlags   ~
+WearFlags    2049
+WearLoc      -1
+ItemType     9
+Weight       5
+Level        1
+Timer        -1
+Cost         4
+Values       2 0 0 0 0
+End
+
+#END

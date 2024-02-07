@@ -26,13 +26,16 @@
  *  around, comes around.                                                  *
  ***************************************************************************/
 
+#include <sys/stat.h>
 #include <sys/types.h>
+#include <libgen.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "merc.h"
+
 
 #if defined( sun )
 #include <memory.h>
@@ -53,7 +56,7 @@ int     system          args( ( const char *string ) );
 static	OBJ_DATA *	rgObjNest	[ MAX_NEST ];
 
 
-int stat;
+int stat_int;
 
 /*
  * Local functions.
@@ -64,6 +67,8 @@ void	fwrite_obj	args( ( CHAR_DATA *ch,  OBJ_DATA  *obj,
 int	fread_char	args( ( CHAR_DATA *ch,  FILE *fp ) );
 int	envy_fread_obj	args( ( CHAR_DATA *ch,  FILE *fp ) );
 int	fread_obj	args( ( CHAR_DATA *ch,  FILE *fp ) );
+char* save_strdup    args( ( const char *s ) );
+FILE *fopen_mkdir	args( ( const char *path, const char *mode ) );
 
 
 /* Courtesy of Yaz of 4th Realm */
@@ -74,6 +79,60 @@ char *initial( const char *str )
     strint[0] = LOWER( str[ 0 ] );
     return strint;
 
+}
+
+char* save_strdup (const char* s)
+{
+  size_t slen = strlen(s);
+  char* result = malloc(slen + 1);
+  if(result == NULL)
+  {
+    return NULL;
+  }
+
+  memcpy(result, s, slen+1);
+  return result;
+}
+
+void mkdir_recursive(char *path) {
+    char *subpath, *cur;
+
+    subpath = save_strdup(path);
+    cur = dirname(subpath);
+
+    // Recurse if parent directories exist
+    if (strcmp(cur, ".") && strcmp(cur, "/")) {
+        mkdir_recursive(cur);
+    }
+
+    // Create directory if it doesn't exist
+    struct stat st = {0};
+    if (stat(path, &st) == -1) {
+        mkdir(path, 0700);
+    }
+
+    free(subpath);
+}
+
+/*
+* fopen function which additionaly creates all necassry directories
+* Dominik Downarowicz 2024/02/24
+*/
+FILE *fopen_mkdir(const char *path, const char *mode) {
+    char *tmp_path = save_strdup(path);
+    char *dir = dirname(tmp_path);
+
+    // Create directory if it doesn't exist
+    //struct stat st = {0};
+    //if (stat(dir, &st) == -1) {
+    //    mkdir(dir, 0700);
+    //}
+    mkdir_recursive(dir);
+
+    free(tmp_path);
+
+    // Open file
+    return fopen(path, mode);
 }
 
 /*
@@ -101,7 +160,7 @@ void backup_char_obj( CHAR_DATA *ch )
     sprintf( strsave, "%s%s%s%s", BACKUP_DIR, initial( ch->name ),
 	    DIR_SEPARATOR, capitalize( ch->name ) );
 
-    if ( !( fp = fopen( strsave, "w" ) ) )
+    if ( !( fp = fopen_mkdir( strsave, "w" ) ) )
     {
         bugf( "Backup_char_obj: fopen %s: ", ch->name );
 	perror( strsave );
@@ -147,6 +206,8 @@ void delete_char_obj( CHAR_DATA *ch )
     return;
 }
 
+
+
 /*
  * Save a character and inventory.
  * Would be cool to save NPC's too for quest purposes,
@@ -160,7 +221,7 @@ void save_char_obj( CHAR_DATA *ch )
 #endif
     char  strsave [ MAX_INPUT_LENGTH  ];
 
-    if ( IS_NPC( ch ) || ch->level < 2 )
+    if ( IS_NPC( ch ) || ch->level < MIN_LEVEL_SAVE)
 	return;
 
     if ( ch->desc && ch->desc->original )
@@ -173,7 +234,7 @@ void save_char_obj( CHAR_DATA *ch )
     sprintf( strsave, "%s%s%s%s", PLAYER_DIR, initial( ch->name ),
 	    DIR_SEPARATOR, capitalize( ch->name ) );
 
-    if ( !( fp = fopen( strsave, "w" ) ) )
+    if ( !( fp = fopen_mkdir( strsave, "w" ) ) )
     {
         bugf( "Save_char_obj: fopen %s: ", ch->name );
 	perror( strsave );

@@ -731,7 +731,7 @@ void do_save( CHAR_DATA *ch, char *argument )
     if ( IS_NPC( ch ) )
 	return;
 
-    if ( ch->level < 2 )
+    if ( ch->level < MIN_LEVEL_SAVE)
     {
 	send_to_char( "You must be at least second level to save.\n\r", ch );
 	return;

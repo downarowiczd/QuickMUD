@@ -250,6 +250,8 @@ typedef bool HIT_FUN			args( ( CHAR_DATA *ch,
 #define PULSE_AUCTION		  (   10 * PULSE_PER_SECOND )
 #define PULSE_DB_DUMP             ( 1800 * PULSE_PER_SECOND )
 
+#define MIN_LEVEL_SAVE  1
+
 /*
  * Extended bitvector stuff.
  */
