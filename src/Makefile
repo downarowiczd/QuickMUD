@@ -1,52 +1,27 @@
-# $Id $
+# Generic Makefile.  Read 'port.txt' in the documentation
+# directory for the Makefile that is right for you  - Kahn
 
-# Makefile for Rom24. Works fine on my Debian system.
-# You may need to use 'gmake' on BSD systems.
+CC      = gcc
+PROF    =
+DEBUG   = -g
+DEFINES = #-Wall -Wextra -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement #-DUSE_PTHREADS
+O_FLAGS = #-O2
+C_FLAGS = $(O_FLAGS) -Wall	$(DEBUG) $(PROF) $(DEFINES)
+L_FLAGS = $(O_FLAGS)		$(DEBUG) $(PROF) -lcrypt# -lpthread
 
-CC = gcc
-RM = rm
-EXE = rom
-PROF = -O -g3
-CP = cp
-AREA = ../area/
 
-C_FLAGS = $(PROF) -Wall -fcommon
-L_FLAGS = $(PROF) -lcrypt
+O_FILES = act_clan.o act_comm.o act_game.o act_info.o act_lang.o act_move.o   \
+          act_obj.o act_wiz.o bit.o board.o comm.o const.o db.o     \
+          db2.o fight.o handler.o hunt.o interp.o magic.o mem.o mob_comm.o    \
+          mob_prog.o save.o spec_mob.o spec_obj.o spec_rom.o ssm.o   \
+          tables.o update.o wiznet.o
 
-#IMC2 - Comment out to disable IMC2 support
-IMC = 1
+envy: $(O_FILES)
+	rm -f envy
+	$(CC) -o envy $(O_FILES) $(L_FLAGS) 
 
-ifdef IMC
-   C_FLAGS := $(C_FLAGS) -DIMC -DIMCROM
-endif
-
-# Source Files
-SRC_FILES := $(wildcard *.c)
-
-# Object Files
-OBJ_DIR = obj
-OBJ_FILES := $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
-
-rom: $(OBJ_FILES)
-	$(RM) -f $(EXE)
-	$(CC) -o $(EXE) $(OBJ_FILES) $(L_FLAGS)
-
-copy:
-	$(CP) $(EXE) $(AREA)
-
-$(OBJ_DIR)/%.o: %.c
-	$(CC) $(C_FLAGS) -c -o $@ $<
-
-run:
-	make clean
-	make
-	make copy
+.c.o: merc.h
+	$(CC) -c $(C_FLAGS) $<
 
 clean:
-	$(RM) -f $(OBJ_FILES) $(EXE) *~ *.bak *.orig *.rej
-
-distro:
-	make clean
-	cd ../..
-	$(RM) -f log/*.log
-	tar zvcf quickmud-`date -I`.tar.gz QuickMUD
+	rm -f *.o envy envy2

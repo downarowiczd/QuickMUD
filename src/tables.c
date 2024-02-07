@@ -1,750 +1,1286 @@
 /***************************************************************************
  *  Original Diku Mud copyright (C) 1990, 1991 by Sebastian Hammer,        *
- *  Michael Seifert, Hans Henrik Strfeldt, Tom Madsen, and Katja Nyboe.    *
+ *  Michael Seifert, Hans Henrik St{rfeldt, Tom Madsen, and Katja Nyboe.   *
  *                                                                         *
  *  Merc Diku Mud improvments copyright (C) 1992, 1993 by Michael          *
  *  Chastain, Michael Quan, and Mitchell Tse.                              *
  *                                                                         *
- *  In order to use any part of this Merc Diku Mud, you must comply with   *
- *  both the original Diku license in 'license.doc' as well the Merc       *
- *  license in 'license.txt'.  In particular, you may not remove either of *
- *  these copyright notices.                                               *
+ *  Envy Diku Mud improvements copyright (C) 1994 by Michael Quan, David   *
+ *  Love, Guilherme 'Willie' Arnold, and Mitchell Tse.                     *
+ *                                                                         *
+ *  EnvyMud 2.0 improvements copyright (C) 1995 by Michael Quan and        *
+ *  Mitchell Tse.                                                          *
+ *                                                                         *
+ *  EnvyMud 2.2 improvements copyright (C) 1996, 1997 by Michael Quan.     *
+ *                                                                         *
+ *  GreedMud 0.99.3 improvements copyright (C) 1997, 1998, 1999            *
+ *  by Vasco Costa.                                                        *
+ *                                                                         *
+ *  In order to use any part of this Envy Diku Mud, you must comply with   *
+ *  the original Diku license in 'license.doc', the Merc license in        *
+ *  'license.txt', as well as the Envy license in 'license.nvy'.           *
+ *  In particular, you may not remove either of these copyright notices.   *
  *                                                                         *
  *  Much time and thought has gone into this software and you are          *
  *  benefitting.  We hope that you share your changes too.  What goes      *
  *  around, comes around.                                                  *
  ***************************************************************************/
 
-/***************************************************************************
- *  ROM 2.4 is copyright 1993-1998 Russ Taylor                             *
- *  ROM has been brought to you by the ROM consortium                      *
- *      Russ Taylor (rtaylor@hypercube.org)                                *
- *      Gabrielle Taylor (gtaylor@hypercube.org)                           *
- *      Brian Moore (zump@rom.org)                                         *
- *  By using this code, you have agreed to follow the terms of the         *
- *  ROM license, in the file Rom24/doc/rom.license                         *
- ***************************************************************************/
-
-#if defined(macintosh)
-#include <types.h>
-#else
 #include <sys/types.h>
-#endif
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include "merc.h"
-#include "tables.h"
 
-/* for clans */
-const struct clan_type clan_table[MAX_CLAN] = {
-    /*  name,       who entry,  death-transfer room,    independent */
-    /* independent should be FALSE if is a real clan */
-    {"", "", ROOM_VNUM_ALTAR, TRUE},
-    {"loner", "[ Loner ] ", ROOM_VNUM_ALTAR, TRUE},
-    {"rom", "[  ROM  ] ", ROOM_VNUM_ALTAR, FALSE}
-};
+extern  int     _filbuf	        args( (FILE *) );
 
-/* for position */
-const struct position_type position_table[] = {
-    {"dead", "dead"},
-    {"mortally wounded", "mort"},
-    {"incapacitated", "incap"},
-    {"stunned", "stun"},
-    {"sleeping", "sleep"},
-    {"resting", "rest"},
-    {"sitting", "sit"},
-    {"fighting", "fight"},
-    {"standing", "stand"},
-    {NULL, NULL}
-};
-
-/* for sex */
-const struct sex_type sex_table[] = {
-    {"none"},
-    {"male"},
-    {"female"},
-    {"either"},
-    {NULL}
-};
-
-/* for sizes */
-const struct size_type size_table[] = {
-    {"tiny"},
-    {"small"},
-    {"medium"},
-    {"large"},
-    {"huge",},
-    {"giant"},
-    {NULL}
-};
-
-/* various flag tables */
-const struct flag_type act_flags[] = {
-    {"npc", A, FALSE},
-    {"sentinel", B, TRUE},
-    {"scavenger", C, TRUE},
-    {"aggressive", F, TRUE},
-    {"stay_area", G, TRUE},
-    {"wimpy", H, TRUE},
-    {"pet", I, TRUE},
-    {"train", J, TRUE},
-    {"practice", K, TRUE},
-    {"undead", O, TRUE},
-    {"cleric", Q, TRUE},
-    {"mage", R, TRUE},
-    {"thief", S, TRUE},
-    {"warrior", T, TRUE},
-    {"noalign", U, TRUE},
-    {"nopurge", V, TRUE},
-    {"outdoors", W, TRUE},
-    {"indoors", Y, TRUE},
-    {"healer", aa, TRUE},
-    {"gain", bb, TRUE},
-    {"update_always", cc, TRUE},
-    {"changer", dd, TRUE},
-    {NULL, 0, FALSE}
-};
-
-const struct flag_type plr_flags[] = {
-    {"npc", A, FALSE},
-    {"autoassist", C, FALSE},
-    {"autoexit", D, FALSE},
-    {"autoloot", E, FALSE},
-    {"autosac", F, FALSE},
-    {"autogold", G, FALSE},
-    {"autosplit", H, FALSE},
-    {"holylight", N, FALSE},
-    {"can_loot", P, FALSE},
-    {"nosummon", Q, FALSE},
-    {"nofollow", R, FALSE},
-    {"colour", T, FALSE},
-    {"permit", U, TRUE},
-    {"log", W, FALSE},
-    {"deny", X, FALSE},
-    {"freeze", Y, FALSE},
-    {"thief", Z, FALSE},
-    {"killer", aa, FALSE},
-    {NULL, 0, 0}
-};
-
-const struct flag_type affect_flags[] = {
-    {"blind", A, TRUE},
-    {"invisible", B, TRUE},
-    {"detect_evil", C, TRUE},
-    {"detect_invis", D, TRUE},
-    {"detect_magic", E, TRUE},
-    {"detect_hidden", F, TRUE},
-    {"detect_good", G, TRUE},
-    {"sanctuary", H, TRUE},
-    {"faerie_fire", I, TRUE},
-    {"infrared", J, TRUE},
-    {"curse", K, TRUE},
-    {"poison", M, TRUE},
-    {"protect_evil", N, TRUE},
-    {"protect_good", O, TRUE},
-    {"sneak", P, TRUE},
-    {"hide", Q, TRUE},
-    {"sleep", R, TRUE},
-    {"charm", S, TRUE},
-    {"flying", T, TRUE},
-    {"pass_door", U, TRUE},
-    {"haste", V, TRUE},
-    {"calm", W, TRUE},
-    {"plague", X, TRUE},
-    {"weaken", Y, TRUE},
-    {"dark_vision", Z, TRUE},
-    {"berserk", aa, TRUE},
-    {"swim", bb, TRUE},
-    {"regeneration", cc, TRUE},
-    {"slow", dd, TRUE},
-    {NULL, 0, 0}
-};
-
-const struct flag_type off_flags[] = {
-    {"area_attack", A, TRUE},
-    {"backstab", B, TRUE},
-    {"bash", C, TRUE},
-    {"berserk", D, TRUE},
-    {"disarm", E, TRUE},
-    {"dodge", F, TRUE},
-    {"fade", G, TRUE},
-    {"fast", H, TRUE},
-    {"kick", I, TRUE},
-    {"dirt_kick", J, TRUE},
-    {"parry", K, TRUE},
-    {"rescue", L, TRUE},
-    {"tail", M, TRUE},
-    {"trip", N, TRUE},
-    {"crush", O, TRUE},
-    {"assist_all", P, TRUE},
-    {"assist_align", Q, TRUE},
-    {"assist_race", R, TRUE},
-    {"assist_players", S, TRUE},
-    {"assist_guard", T, TRUE},
-    {"assist_vnum", U, TRUE},
-    {NULL, 0, 0}
-};
-
-const struct flag_type imm_flags[] = {
-    {"summon", A, TRUE},
-    {"charm", B, TRUE},
-    {"magic", C, TRUE},
-    {"weapon", D, TRUE},
-    {"bash", E, TRUE},
-    {"pierce", F, TRUE},
-    {"slash", G, TRUE},
-    {"fire", H, TRUE},
-    {"cold", I, TRUE},
-    {"lightning", J, TRUE},
-    {"acid", K, TRUE},
-    {"poison", L, TRUE},
-    {"negative", M, TRUE},
-    {"holy", N, TRUE},
-    {"energy", O, TRUE},
-    {"mental", P, TRUE},
-    {"disease", Q, TRUE},
-    {"drowning", R, TRUE},
-    {"light", S, TRUE},
-    {"sound", T, TRUE},
-    {"wood", X, TRUE},
-    {"silver", Y, TRUE},
-    {"iron", Z, TRUE},
-    {NULL, 0, 0}
-};
-
-const struct flag_type form_flags[] = {
-    {"edible", FORM_EDIBLE, TRUE},
-    {"poison", FORM_POISON, TRUE},
-    {"magical", FORM_MAGICAL, TRUE},
-    {"instant_decay", FORM_INSTANT_DECAY, TRUE},
-    {"other", FORM_OTHER, TRUE},
-    {"animal", FORM_ANIMAL, TRUE},
-    {"sentient", FORM_SENTIENT, TRUE},
-    {"undead", FORM_UNDEAD, TRUE},
-    {"construct", FORM_CONSTRUCT, TRUE},
-    {"mist", FORM_MIST, TRUE},
-    {"intangible", FORM_INTANGIBLE, TRUE},
-    {"biped", FORM_BIPED, TRUE},
-    {"centaur", FORM_CENTAUR, TRUE},
-    {"insect", FORM_INSECT, TRUE},
-    {"spider", FORM_SPIDER, TRUE},
-    {"crustacean", FORM_CRUSTACEAN, TRUE},
-    {"worm", FORM_WORM, TRUE},
-    {"blob", FORM_BLOB, TRUE},
-    {"mammal", FORM_MAMMAL, TRUE},
-    {"bird", FORM_BIRD, TRUE},
-    {"reptile", FORM_REPTILE, TRUE},
-    {"snake", FORM_SNAKE, TRUE},
-    {"dragon", FORM_DRAGON, TRUE},
-    {"amphibian", FORM_AMPHIBIAN, TRUE},
-    {"fish", FORM_FISH, TRUE},
-    {"cold_blood", FORM_COLD_BLOOD, TRUE},
-    {NULL, 0, 0}
-};
-
-const struct flag_type part_flags[] = {
-    {"head", PART_HEAD, TRUE},
-    {"arms", PART_ARMS, TRUE},
-    {"legs", PART_LEGS, TRUE},
-    {"heart", PART_HEART, TRUE},
-    {"brains", PART_BRAINS, TRUE},
-    {"guts", PART_GUTS, TRUE},
-    {"hands", PART_HANDS, TRUE},
-    {"feet", PART_FEET, TRUE},
-    {"fingers", PART_FINGERS, TRUE},
-    {"ear", PART_EAR, TRUE},
-    {"eye", PART_EYE, TRUE},
-    {"long_tongue", PART_LONG_TONGUE, TRUE},
-    {"eyestalks", PART_EYESTALKS, TRUE},
-    {"tentacles", PART_TENTACLES, TRUE},
-    {"fins", PART_FINS, TRUE},
-    {"wings", PART_WINGS, TRUE},
-    {"tail", PART_TAIL, TRUE},
-    {"claws", PART_CLAWS, TRUE},
-    {"fangs", PART_FANGS, TRUE},
-    {"horns", PART_HORNS, TRUE},
-    {"scales", PART_SCALES, TRUE},
-    {"tusks", PART_TUSKS, TRUE},
-    {NULL, 0, 0}
-};
-
-const struct flag_type comm_flags[] = {
-    {"quiet", COMM_QUIET, TRUE},
-    {"deaf", COMM_DEAF, TRUE},
-    {"nowiz", COMM_NOWIZ, TRUE},
-    {"noclangossip", COMM_NOAUCTION, TRUE},
-    {"nogossip", COMM_NOGOSSIP, TRUE},
-    {"noquestion", COMM_NOQUESTION, TRUE},
-    {"nomusic", COMM_NOMUSIC, TRUE},
-    {"noclan", COMM_NOCLAN, TRUE},
-    {"noquote", COMM_NOQUOTE, TRUE},
-    {"shoutsoff", COMM_SHOUTSOFF, TRUE},
-    {"compact", COMM_COMPACT, TRUE},
-    {"brief", COMM_BRIEF, TRUE},
-    {"prompt", COMM_PROMPT, TRUE},
-    {"combine", COMM_COMBINE, TRUE},
-    {"telnet_ga", COMM_TELNET_GA, TRUE},
-    {"show_affects", COMM_SHOW_AFFECTS, TRUE},
-    {"nograts", COMM_NOGRATS, TRUE},
-    {"noemote", COMM_NOEMOTE, FALSE},
-    {"noshout", COMM_NOSHOUT, FALSE},
-    {"notell", COMM_NOTELL, FALSE},
-    {"nochannels", COMM_NOCHANNELS, FALSE},
-    {"snoop_proof", COMM_SNOOP_PROOF, FALSE},
-    {"afk", COMM_AFK, TRUE},
-    {NULL, 0, 0}
-};
-
-const struct flag_type mprog_flags[] = {
-    {"act", TRIG_ACT, TRUE},
-    {"bribe", TRIG_BRIBE, TRUE},
-    {"death", TRIG_DEATH, TRUE},
-    {"entry", TRIG_ENTRY, TRUE},
-    {"fight", TRIG_FIGHT, TRUE},
-    {"give", TRIG_GIVE, TRUE},
-    {"greet", TRIG_GREET, TRUE},
-    {"grall", TRIG_GRALL, TRUE},
-    {"kill", TRIG_KILL, TRUE},
-    {"hpcnt", TRIG_HPCNT, TRUE},
-    {"random", TRIG_RANDOM, TRUE},
-    {"speech", TRIG_SPEECH, TRUE},
-    {"exit", TRIG_EXIT, TRUE},
-    {"exall", TRIG_EXALL, TRUE},
-    {"delay", TRIG_DELAY, TRUE},
-    {"surr", TRIG_SURR, TRUE},
-    {NULL, 0, TRUE}
-};
-
-const struct flag_type area_flags[] = {
-    {"none", AREA_NONE, FALSE},
-    {"changed", AREA_CHANGED, TRUE},
-    {"added", AREA_ADDED, TRUE},
-    {"loading", AREA_LOADING, FALSE},
-    {NULL, 0, 0}
-};
+#if !defined( ultrix ) && !defined( apollo )
+#include <memory.h>
+#endif
 
 
 
-const struct flag_type sex_flags[] = {
-    {"male", SEX_MALE, TRUE},
-    {"female", SEX_FEMALE, TRUE},
-    {"neutral", SEX_NEUTRAL, TRUE},
-    {"random", 3, TRUE},        /* ROM */
-    {"none", SEX_NEUTRAL, TRUE},
-    {NULL, 0, 0}
-};
+#if defined( KEY )
+#undef KEY
+#endif
 
+#define KEY( literal, field, value )                   \
+                if ( !str_cmp( word, literal ) )       \
+                {                                      \
+                    field  = value;                    \
+                    fMatch = TRUE;                     \
+                    break;                             \
+                }
 
+#define SKEY( string, field )                           \
+                if ( !str_cmp( word, string ) )         \
+                {                                       \
+                    free_string( field );               \
+                    field  = fread_string( fp, &stat ); \
+                    fMatch = TRUE;                      \
+                    break;                              \
+                }
 
-const struct flag_type exit_flags[] = {
-    {"door", EX_ISDOOR, TRUE},
-    {"closed", EX_CLOSED, TRUE},
-    {"locked", EX_LOCKED, TRUE},
-    {"pickproof", EX_PICKPROOF, TRUE},
-    {"nopass", EX_NOPASS, TRUE},
-    {"easy", EX_EASY, TRUE},
-    {"hard", EX_HARD, TRUE},
-    {"infuriating", EX_INFURIATING, TRUE},
-    {"noclose", EX_NOCLOSE, TRUE},
-    {"nolock", EX_NOLOCK, TRUE},
-    {NULL, 0, 0}
-};
-
-
-
-const struct flag_type door_resets[] = {
-    {"open and unlocked", 0, TRUE},
-    {"closed and unlocked", 1, TRUE},
-    {"closed and locked", 2, TRUE},
-    {NULL, 0, 0}
-};
-
-
-
-const struct flag_type room_flags[] = {
-    {"dark", ROOM_DARK, TRUE},
-    {"no_mob", ROOM_NO_MOB, TRUE},
-    {"indoors", ROOM_INDOORS, TRUE},
-    {"private", ROOM_PRIVATE, TRUE},
-    {"safe", ROOM_SAFE, TRUE},
-    {"solitary", ROOM_SOLITARY, TRUE},
-    {"pet_shop", ROOM_PET_SHOP, TRUE},
-    {"no_recall", ROOM_NO_RECALL, TRUE},
-    {"imp_only", ROOM_IMP_ONLY, TRUE},
-    {"gods_only", ROOM_GODS_ONLY, TRUE},
-    {"heroes_only", ROOM_HEROES_ONLY, TRUE},
-    {"newbies_only", ROOM_NEWBIES_ONLY, TRUE},
-    {"law", ROOM_LAW, TRUE},
-    {"nowhere", ROOM_NOWHERE, TRUE},
-    {NULL, 0, 0}
-};
-
-
-
-const struct flag_type sector_flags[] = {
-    {"inside", SECT_INSIDE, TRUE},
-    {"city", SECT_CITY, TRUE},
-    {"field", SECT_FIELD, TRUE},
-    {"forest", SECT_FOREST, TRUE},
-    {"hills", SECT_HILLS, TRUE},
-    {"mountain", SECT_MOUNTAIN, TRUE},
-    {"swim", SECT_WATER_SWIM, TRUE},
-    {"noswim", SECT_WATER_NOSWIM, TRUE},
-    {"unused", SECT_UNUSED, TRUE},
-    {"air", SECT_AIR, TRUE},
-    {"desert", SECT_DESERT, TRUE},
-    {NULL, 0, 0}
-};
-
-
-
-const struct flag_type type_flags[] = {
-    {"light", ITEM_LIGHT, TRUE},
-    {"scroll", ITEM_SCROLL, TRUE},
-    {"wand", ITEM_WAND, TRUE},
-    {"staff", ITEM_STAFF, TRUE},
-    {"weapon", ITEM_WEAPON, TRUE},
-    {"treasure", ITEM_TREASURE, TRUE},
-    {"armor", ITEM_ARMOR, TRUE},
-    {"potion", ITEM_POTION, TRUE},
-    {"furniture", ITEM_FURNITURE, TRUE},
-    {"trash", ITEM_TRASH, TRUE},
-    {"container", ITEM_CONTAINER, TRUE},
-    {"drinkcontainer", ITEM_DRINK_CON, TRUE},
-    {"key", ITEM_KEY, TRUE},
-    {"food", ITEM_FOOD, TRUE},
-    {"money", ITEM_MONEY, TRUE},
-    {"boat", ITEM_BOAT, TRUE},
-    {"npccorpse", ITEM_CORPSE_NPC, TRUE},
-    {"pc corpse", ITEM_CORPSE_PC, FALSE},
-    {"fountain", ITEM_FOUNTAIN, TRUE},
-    {"pill", ITEM_PILL, TRUE},
-    {"protect", ITEM_PROTECT, TRUE},
-    {"map", ITEM_MAP, TRUE},
-    {"portal", ITEM_PORTAL, TRUE},
-    {"warpstone", ITEM_WARP_STONE, TRUE},
-    {"roomkey", ITEM_ROOM_KEY, TRUE},
-    {"gem", ITEM_GEM, TRUE},
-    {"jewelry", ITEM_JEWELRY, TRUE},
-    {"jukebox", ITEM_JUKEBOX, TRUE},
-    {NULL, 0, 0}
-};
-
-
-const struct flag_type extra_flags[] = {
-    {"glow", ITEM_GLOW, TRUE},
-    {"hum", ITEM_HUM, TRUE},
-    {"dark", ITEM_DARK, TRUE},
-    {"lock", ITEM_LOCK, TRUE},
-    {"evil", ITEM_EVIL, TRUE},
-    {"invis", ITEM_INVIS, TRUE},
-    {"magic", ITEM_MAGIC, TRUE},
-    {"nodrop", ITEM_NODROP, TRUE},
-    {"bless", ITEM_BLESS, TRUE},
-    {"antigood", ITEM_ANTI_GOOD, TRUE},
-    {"antievil", ITEM_ANTI_EVIL, TRUE},
-    {"antineutral", ITEM_ANTI_NEUTRAL, TRUE},
-    {"noremove", ITEM_NOREMOVE, TRUE},
-    {"inventory", ITEM_INVENTORY, TRUE},
-    {"nopurge", ITEM_NOPURGE, TRUE},
-    {"rotdeath", ITEM_ROT_DEATH, TRUE},
-    {"visdeath", ITEM_VIS_DEATH, TRUE},
-    {"nonmetal", ITEM_NONMETAL, TRUE},
-    {"meltdrop", ITEM_MELT_DROP, TRUE},
-    {"hadtimer", ITEM_HAD_TIMER, TRUE},
-    {"sellextract", ITEM_SELL_EXTRACT, TRUE},
-    {"burnproof", ITEM_BURN_PROOF, TRUE},
-    {"nouncurse", ITEM_NOUNCURSE, TRUE},
-    {NULL, 0, 0}
-};
-
-
-
-const struct flag_type wear_flags[] = {
-    {"take", ITEM_TAKE, TRUE},
-    {"finger", ITEM_WEAR_FINGER, TRUE},
-    {"neck", ITEM_WEAR_NECK, TRUE},
-    {"body", ITEM_WEAR_BODY, TRUE},
-    {"head", ITEM_WEAR_HEAD, TRUE},
-    {"legs", ITEM_WEAR_LEGS, TRUE},
-    {"feet", ITEM_WEAR_FEET, TRUE},
-    {"hands", ITEM_WEAR_HANDS, TRUE},
-    {"arms", ITEM_WEAR_ARMS, TRUE},
-    {"shield", ITEM_WEAR_SHIELD, TRUE},
-    {"about", ITEM_WEAR_ABOUT, TRUE},
-    {"waist", ITEM_WEAR_WAIST, TRUE},
-    {"wrist", ITEM_WEAR_WRIST, TRUE},
-    {"wield", ITEM_WIELD, TRUE},
-    {"hold", ITEM_HOLD, TRUE},
-    {"nosac", ITEM_NO_SAC, TRUE},
-    {"wearfloat", ITEM_WEAR_FLOAT, TRUE},
-/*    {   "twohands",            ITEM_TWO_HANDS,         TRUE    }, */
-    {NULL, 0, 0}
-};
-
-/*
- * Used when adding an affect to tell where it goes.
- * See addaffect and delaffect in act_olc.c
- */
-const struct flag_type apply_flags[] = {
-    {"none", APPLY_NONE, TRUE},
-    {"strength", APPLY_STR, TRUE},
-    {"dexterity", APPLY_DEX, TRUE},
-    {"intelligence", APPLY_INT, TRUE},
-    {"wisdom", APPLY_WIS, TRUE},
-    {"constitution", APPLY_CON, TRUE},
-    {"sex", APPLY_SEX, TRUE},
-    {"class", APPLY_CLASS, TRUE},
-    {"level", APPLY_LEVEL, TRUE},
-    {"age", APPLY_AGE, TRUE},
-    {"height", APPLY_HEIGHT, TRUE},
-    {"weight", APPLY_WEIGHT, TRUE},
-    {"mana", APPLY_MANA, TRUE},
-    {"hp", APPLY_HIT, TRUE},
-    {"move", APPLY_MOVE, TRUE},
-    {"gold", APPLY_GOLD, TRUE},
-    {"experience", APPLY_EXP, TRUE},
-    {"ac", APPLY_AC, TRUE},
-    {"hitroll", APPLY_HITROLL, TRUE},
-    {"damroll", APPLY_DAMROLL, TRUE},
-    {"saves", APPLY_SAVES, TRUE},
-    {"savingpara", APPLY_SAVING_PARA, TRUE},
-    {"savingrod", APPLY_SAVING_ROD, TRUE},
-    {"savingpetri", APPLY_SAVING_PETRI, TRUE},
-    {"savingbreath", APPLY_SAVING_BREATH, TRUE},
-    {"savingspell", APPLY_SAVING_SPELL, TRUE},
-    {"spellaffect", APPLY_SPELL_AFFECT, FALSE},
-    {NULL, 0, 0}
-};
+#define	GET_TOKEN( fp, token, string )				\
+		if ( !( token = fread_word( fp, &stat ) ) )	\
+		{						\
+		    token = string;				\
+		}
 
 
 
 /*
- * What is seen.
+ * Globals.
  */
-const struct flag_type wear_loc_strings[] = {
-    {"in the inventory", WEAR_NONE, TRUE},
-    {"as a light", WEAR_LIGHT, TRUE},
-    {"on the left finger", WEAR_FINGER_L, TRUE},
-    {"on the right finger", WEAR_FINGER_R, TRUE},
-    {"around the neck (1)", WEAR_NECK_1, TRUE},
-    {"around the neck (2)", WEAR_NECK_2, TRUE},
-    {"on the body", WEAR_BODY, TRUE},
-    {"over the head", WEAR_HEAD, TRUE},
-    {"on the legs", WEAR_LEGS, TRUE},
-    {"on the feet", WEAR_FEET, TRUE},
-    {"on the hands", WEAR_HANDS, TRUE},
-    {"on the arms", WEAR_ARMS, TRUE},
-    {"as a shield", WEAR_SHIELD, TRUE},
-    {"about the shoulders", WEAR_ABOUT, TRUE},
-    {"around the waist", WEAR_WAIST, TRUE},
-    {"on the left wrist", WEAR_WRIST_L, TRUE},
-    {"on the right wrist", WEAR_WRIST_R, TRUE},
-    {"wielded", WEAR_WIELD, TRUE},
-    {"held in the hands", WEAR_HOLD, TRUE},
-    {"floating nearby", WEAR_FLOAT, TRUE},
-    {NULL, 0, 0}
-};
+
+/* The social table.  New socials contributed by Katrina and Binky */
+SOC_INDEX_DATA *	soc_index_hash	[ MAX_WORD_HASH ];
+
+CLAN_DATA *             clan_first;
+CLAN_DATA *             clan_last;
+
+CLASS_TYPE *		class_first;
+CLASS_TYPE *		class_last;
+
+extern FILE *		fpArea;
+extern char		strArea		[ ];
+
+/*
+ * New code for loading classes from file.
+ */
+bool fread_class( char *filename )
+{
+           FILE        *fp;
+    static CLASS_TYPE   class_zero;
+           CLASS_TYPE  *cclass;
+     const char        *word;
+           char         buf [ MAX_STRING_LENGTH ];
+           bool         fMatch;
+           int          stat;
+           int          level;
+           int          i;
+
+    sprintf( buf, "%s%s", CLASS_DIR, filename );
+    if ( !( fp = fopen( buf, "r" ) ) )
+    {
+        perror( buf );
+        return FALSE;
+    }
+
+    strcpy( strArea, filename );
+    fpArea = fp;
+
+    cclass = (CLASS_TYPE *) alloc_mem ( sizeof( CLASS_TYPE ) );
+
+    *cclass = class_zero;
+
+    cclass->skill_level	 = (int *) alloc_mem( sizeof( int ) * MAX_SKILL );
+    cclass->skill_adept	 = (int *) alloc_mem( sizeof( int ) * MAX_SKILL );
+    cclass->skill_rating = (int *) alloc_mem( sizeof( int ) * MAX_SKILL );
+
+    /* Initialize MAX_SPELL marker so noone can use it. */
+    cclass->skill_level[MAX_SPELL] = MAX_LEVEL+1;
+
+    for ( i = 0; i < MAX_SKILL; i++ )
+    {
+	cclass->skill_level[i] = L_APP;
+	cclass->skill_adept[i] = 0;
+    }
+
+    for ( i = 0; i <= MAX_LEVEL; i++ )
+    {
+	cclass->title[i][0] = str_dup( "" );
+	cclass->title[i][1] = str_dup( "" );
+    }
+	
+    for ( i = 0; i < MAX_POSE; i++ )
+    {
+	cclass->pose[i][0] = str_dup( "" );
+	cclass->pose[i][1] = str_dup( "" );
+    }
+
+    for ( ; ; )
+    {
+    	GET_TOKEN( fp, word, "End" );
+	fMatch = FALSE;
+
+	switch ( UPPER( word[0] ) )
+	{
+	case '*':
+	    fMatch = TRUE;
+	    fread_to_eol( fp );
+	    break;
+
+	case 'A':
+            KEY( "AtrPrm", cclass->attr_prime, fread_number( fp, &stat ) );
+	    break;
+
+	case 'C':
+	    break;
+
+	case 'E':
+	    if ( !str_cmp( word, "End" ) )
+	    {
+		fclose( fp );
+
+		if ( !class_first )
+		    class_first      = cclass;
+
+		if ( class_last )
+		    class_last->next = cclass;
+
+		class_last           = cclass;
+
+		fpArea = NULL;
+		return TRUE;
+	    }
+	    break;
+
+	case 'G':
+            KEY( "Guild", cclass->guild, fread_number( fp, &stat ) );
+	    break;
+
+	case 'H':
+            KEY( "Hpmin", cclass->hp_min, fread_number( fp, &stat ) );
+            KEY( "Hpmax", cclass->hp_max, fread_number( fp, &stat ) );
+	    break;
+
+	case 'M':
+            KEY( "Mana", cclass->fMana, fread_number( fp, &stat ) );
+	    break;
+
+	case 'N':
+            SKEY( "Nm", cclass->name );
+	    break;
+
+	case 'P':
+	    if ( !str_cmp( word, "Pose" ) )
+	    {
+		level = fread_number( fp, &stat );
+		i     = fread_number( fp, &stat );
+
+		if ( level < MAX_POSE )
+		{
+                    free_string( cclass->pose[level][i] );
+                    cclass->pose[level][i] = fread_string( fp, &stat );
+		}
+		else
+		    bugf( "Fread_class: invalid pose." );
+		fMatch = TRUE;
+	    }
+
+	    break;
+
+	case 'S':
+            KEY( "SkllAdpt", cclass->max_adept, fread_number( fp, &stat ) );
+
+	    if ( !str_cmp( word, "Skll" ) )
+	    {
+		int   sn;
+		int   value1;
+		int   value2;
+		int   value3;
+
+		value1 = fread_number( fp, &stat );
+		value2 = fread_number( fp, &stat );
+		value3 = fread_number( fp, &stat );
+		word   = fread_word( fp, &stat );
+		sn     = skill_lookup( word );
+		if ( sn == -1 )
+		{
+		    bugf( "Fread_class: unknown skill: %s.", word );
+		}
+		else
+		{
+		    cclass->skill_level [sn] = value1;
+		    cclass->skill_rating[sn] = value2;
+		    cclass->skill_adept [sn] = value3;
+		}
+		fMatch = TRUE;
+	    }
+
+	    break;
+
+	case 'T':
+	    KEY( "Thac0", cclass->thac0_00, fread_number( fp, &stat ) );
+	    KEY( "Thac47", cclass->thac0_47, fread_number( fp, &stat ) );
+
+	    if ( !str_cmp( word, "Ttle" ) )
+	    {
+		i  = fread_number( fp, &stat );
+
+		if ( i <= MAX_LEVEL )
+		{
+                    free_string( cclass->title[i][0] );
+                    free_string( cclass->title[i][1] );
+                    cclass->title[i][0] = fread_string( fp, &stat );
+                    cclass->title[i][1] = fread_string( fp, &stat );
+		}
+		else
+		    bugf( "Fread_class: too many titles." );
+		fMatch = TRUE;
+	    }
+
+	    break;
+
+	case 'W':
+	    SKEY( "WhoNm", cclass->who_name );
+	    KEY( "Wpn", cclass->weapon, fread_number( fp, &stat ) );
+	    break;
+	}
+
+	if ( !fMatch )
+	{
+            bugf( "load_class_file: no match: %s", word );
+	}
+    }
+
+    return FALSE;
+}
+
+/*
+ * Load in all the class files.
+ */ 
+void load_classes( void )
+{
+    FILE       *fpList;
+    const char *filename;
+    char        fname     [ MAX_STRING_LENGTH ];
+    char        classlist [ MAX_STRING_LENGTH ];
+    int         stat;
+
+    log_string( "Loading classes" );
+
+    sprintf( classlist, "%s%s", CLASS_DIR, CLASS_LIST );
+    if ( !( fpList = fopen( classlist, "r" ) ) )
+    {
+        perror( classlist );
+        exit( 1 );
+    }
+
+    for ( ; ; )
+    {
+    	GET_TOKEN( fpList, filename, "$" );
+	strcpy( fname, filename );
+        if ( fname[0] == '$' )
+          break;
+
+        if ( fread_class( fname ) )
+	    fputc( '.', stderr );
+	else
+	    bugf( "Cannot load class file: %s", fname );
+    }
+    fclose( fpList );
+
+    fputc( '\n', stderr );
+    return;
+}
+
+void save_class( const CLASS_TYPE *cclass )
+{
+    FILE                    *fp;
+    char                     buf  	[ MAX_STRING_LENGTH ];
+    char                     filename	[ MAX_INPUT_LENGTH  ];
+    int                      level;
+    int                      pose;
+    int                      sn;
+
+    sprintf( filename, "%s.cls", cclass->who_name );
+
+    filename[0] = LOWER( filename[0] );
+
+    sprintf( buf, "%s%s", CLASS_DIR, filename );
+
+    fclose( fpReserve );
+
+    if ( !( fp = fopen( buf, "w" ) ) )
+    {
+        bugf( "Cannot open: %s for writing", filename );
+    }
+    else
+    {
+	fprintf( fp, "Nm          %s~\n",	cclass->name		);
+	fprintf( fp, "WhoNm       %s~\n",	cclass->who_name	);
+	fprintf( fp, "AtrPrm      %d\n",	cclass->attr_prime	);
+	fprintf( fp, "Wpn         %d\n",	cclass->weapon		);
+	fprintf( fp, "Guild       %d\n",	cclass->guild		);
+	fprintf( fp, "Sklladpt    %d\n",	cclass->max_adept	);
+	fprintf( fp, "Thac0       %d\n",	cclass->thac0_00	);
+	fprintf( fp, "Thac47      %d\n",	cclass->thac0_47	);
+	fprintf( fp, "Hpmin       %d\n",	cclass->hp_min		);
+	fprintf( fp, "Hpmax       %d\n",	cclass->hp_max		);
+	fprintf( fp, "Mana        %d\n",	cclass->fMana		);
+
+	for ( sn = 0; sn < MAX_SKILL; sn++ )
+	{
+	    if ( !skill_table[sn].name )
+		break;
+
+	    if ( ( level = cclass->skill_level[sn] ) < LEVEL_IMMORTAL )
+		fprintf( fp, "Skll        %3d %3d %3d '%s'\n",
+			level,
+			cclass->skill_rating[sn],
+			cclass->skill_adept [sn],
+			skill_table[sn].name );
+	}
+
+	for ( level = 0; level <= MAX_LEVEL; level++ )
+	    fprintf( fp, "Ttle        %2d %s~ %s~\n",
+		level, cclass->title [level] [0], cclass->title [level] [1] );
+
+	for ( pose = 0; pose < MAX_POSE; pose++ )
+	{
+	    fprintf( fp, "Pose        %2d %1d %s~\n",
+		pose, 0, cclass->pose[pose][0] );
+	    fprintf( fp, "Pose        %2d %1d %s~\n",
+		pose, 1, cclass->pose[pose][1] );
+	}
+	fprintf( fp, "End\n" );
+
+	fclose( fp );
+    }
+
+    fpReserve = fopen( NULL_FILE, "r" );
+    return;
+}
+
+void save_classes( void )
+{
+    CLASS_TYPE *cclass;
+
+    for ( cclass = class_first; cclass; cclass = cclass->next )
+	save_class( cclass );
+
+    return;
+}
 
 
-const struct flag_type wear_loc_flags[] = {
-    {"none", WEAR_NONE, TRUE},
-    {"light", WEAR_LIGHT, TRUE},
-    {"lfinger", WEAR_FINGER_L, TRUE},
-    {"rfinger", WEAR_FINGER_R, TRUE},
-    {"neck1", WEAR_NECK_1, TRUE},
-    {"neck2", WEAR_NECK_2, TRUE},
-    {"body", WEAR_BODY, TRUE},
-    {"head", WEAR_HEAD, TRUE},
-    {"legs", WEAR_LEGS, TRUE},
-    {"feet", WEAR_FEET, TRUE},
-    {"hands", WEAR_HANDS, TRUE},
-    {"arms", WEAR_ARMS, TRUE},
-    {"shield", WEAR_SHIELD, TRUE},
-    {"about", WEAR_ABOUT, TRUE},
-    {"waist", WEAR_WAIST, TRUE},
-    {"lwrist", WEAR_WRIST_L, TRUE},
-    {"rwrist", WEAR_WRIST_R, TRUE},
-    {"wielded", WEAR_WIELD, TRUE},
-    {"hold", WEAR_HOLD, TRUE},
-    {"floating", WEAR_FLOAT, TRUE},
-    {NULL, 0, 0}
-};
 
-const struct flag_type container_flags[] = {
-    {"closeable", 1, TRUE},
-    {"pickproof", 2, TRUE},
-    {"closed", 4, TRUE},
-    {"locked", 8, TRUE},
-    {"puton", 16, TRUE},
-    {NULL, 0, 0}
-};
+/*
+ * Add a social to the social index table                       - Thoric
+ * Hashed and insert sorted.
+ */
+void add_social( SOC_INDEX_DATA *social )
+{
+    SOC_INDEX_DATA *tmp;
+    SOC_INDEX_DATA *prev;
+    int             hash;
+    int             x;
 
-/*****************************************************************************
-                      ROM - specific tables:
- ****************************************************************************/
+    if ( !social )
+    {
+	bug( "Add_social: NULL social", 0 );
+	return;
+    }
+
+    if ( !social->name )
+    {
+	bug( "Add_social: NULL social->name", 0 );
+	return;
+    }
+
+    if ( !social->char_no_arg )
+    {
+	bug( "Add_social: NULL social->char_no_arg", 0 );
+	return;
+    }
+
+    /* make sure the name is all lowercase */
+    for ( x = 0; social->name[x] != '\0'; x++ )
+	social->name[x] = LOWER( social->name[x] );
+
+    if ( social->name[0] < 'a' || social->name[0] > 'z' )
+	hash = 0;
+    else
+	hash = ( social->name[0] - 'a' ) + 1;
+
+    if ( !( prev = tmp = soc_index_hash[hash] ) )
+    {
+	social->next = soc_index_hash[hash];
+	soc_index_hash[hash] = social;
+	return;
+    }
+
+    for ( ; tmp; tmp = tmp->next )
+    {
+	if ( !( x = strcmp( social->name, tmp->name ) ) )
+	{
+	    bug( "Add_social: trying to add duplicate name to bucket %d", hash);
+	    free_social( social );
+	    return;
+	}
+	else
+	if ( x < 0 )
+	{
+	    if ( tmp == soc_index_hash[hash] )
+	    {
+		social->next = soc_index_hash[hash];
+		soc_index_hash[hash] = social;
+		return;
+	    }
+	    prev->next = social;
+	    social->next = tmp;
+	    return;
+	}
+	prev = tmp;
+    }
+
+    /* add to end */
+    prev->next = social;
+    social->next = NULL;
+    return;
+}
+
+/*
+ * Save the social_table_tables to disk. -Toric
+ */
+void save_socials( void )
+{
+    FILE           *fpout;
+    SOC_INDEX_DATA *social;
+    int             x;
+    char            strsave [ MAX_INPUT_LENGTH ];
+
+    fclose( fpReserve );
+
+    sprintf( strsave, "%s%s", SYSTEM_DIR, SOCIAL_FILE );
+
+    if ( !( fpout = fopen( strsave, "w" ) ) )
+    {
+	bug( "Cannot open SOCIALS.TXT for writting", 0 );
+	perror( SOCIAL_FILE );
+	return;
+    }
+
+    for ( x = 0; x < 27; x++ )
+    {
+	for ( social = soc_index_hash[x]; social; social = social->next )
+	{
+	    if ( !social->name || social->name[0] == '\0' )
+	    {
+		bug( "Save_socials: blank social in hash bucket %d", x );
+		continue;
+	    }
+	    fprintf( fpout, "#SOCIAL\n" );
+	    fprintf( fpout, "Name        %s~\n",	social->name );
+	    if ( social->char_no_arg )
+		fprintf( fpout, "CharNoArg   %s~\n",	social->char_no_arg );
+	    else
+	        bug( "Save_socials: NULL char_no_arg in hash bucket %d", x );
+	    if ( social->others_no_arg )
+		fprintf( fpout, "OthersNoArg %s~\n",	social->others_no_arg );
+	    if ( social->char_found )
+		fprintf( fpout, "CharFound   %s~\n",	social->char_found );
+	    if ( social->others_found )
+		fprintf( fpout, "OthersFound %s~\n",	social->others_found );
+	    if ( social->vict_found )
+		fprintf( fpout, "VictFound   %s~\n",	social->vict_found );
+	    if ( social->char_auto )
+		fprintf( fpout, "CharAuto    %s~\n",	social->char_auto );
+	    if ( social->others_auto )
+		fprintf( fpout, "OthersAuto  %s~\n",	social->others_auto );
+	    fprintf( fpout, "End\n\n" );
+	}
+    }
+
+    fprintf( fpout, "#END\n" );
+    fclose( fpout );
+
+    fpReserve = fopen( NULL_FILE, "r" );
+    return;
+}
+
+/*
+ * Clear a new social.
+ */
+void clear_social( SOC_INDEX_DATA *soc )
+{
+    static SOC_INDEX_DATA soc_zero;
+
+    *soc			= soc_zero;
+    soc->name			= NULL;
+    soc->char_no_arg		= NULL;
+    soc->others_no_arg		= NULL;
+    soc->char_found		= NULL;
+    soc->others_found		= NULL;
+    soc->vict_found		= NULL;
+    soc->char_auto		= NULL;
+    soc->others_auto		= NULL;
+    return;
+}
+
+/*
+ * Take a social data from the free list and clean it out.
+ */
+SOC_INDEX_DATA *new_social( void )
+{
+    SOC_INDEX_DATA *soc;
+
+    soc		= (SOC_INDEX_DATA *) alloc_perm( sizeof( SOC_INDEX_DATA ) );
+
+    clear_social( soc );
+
+    return soc;
+}
+
+/*
+ * Remove a social from it's hash index                         - Thoric
+ */
+void unlink_social( SOC_INDEX_DATA *social )
+{
+    SOC_INDEX_DATA *tmp;
+    SOC_INDEX_DATA *tmp_next;
+    int             hash;
+
+    if ( !social )
+    {
+        bug( "Unlink_social: NULL social", 0 );
+        return;
+    }
+
+    if ( !islower( social->name[0] ) )
+        hash = 0;
+    else
+        hash = ( social->name[0] - 'a' ) + 1;
+
+    if ( social == ( tmp = soc_index_hash[hash] ) )
+    {
+        soc_index_hash[hash] = tmp->next;
+        return;
+    }
+
+    for ( ; tmp; tmp = tmp_next )
+    {
+        tmp_next = tmp->next;
+        if ( social == tmp_next )
+        {
+            tmp->next = tmp_next->next;
+            return;
+        }
+    }
+
+    return;
+}
+
+/*
+ * Free a social structure
+ */
+void free_social( SOC_INDEX_DATA *social )
+{
+    free_string( social->name          );
+    free_string( social->char_no_arg   );
+    free_string( social->others_no_arg );
+    free_string( social->char_found    );
+    free_string( social->others_found  );
+    free_string( social->vict_found    );
+    free_string( social->char_auto     );
+    free_string( social->others_auto   );
+
+    free_mem( social, sizeof( SOC_INDEX_DATA ) );
+    return;
+}
+
+void fread_social( FILE *fp )
+{
+    const char     *word;
+    SOC_INDEX_DATA *social;
+    bool            fMatch;
+    int             stat;
+
+    social = new_social( );
+
+    for ( ; ; )
+    {
+    	GET_TOKEN( fp, word, "End" );
+	fMatch = FALSE;
+
+	switch ( UPPER( word[0] ) )
+	{
+	case '*':
+	    fMatch = TRUE;
+	    fread_to_eol( fp );
+	    break;
+
+	case 'C':
+	    SKEY( "CharNoArg", social->char_no_arg );
+	    SKEY( "CharFound", social->char_found  );
+	    SKEY( "CharAuto",  social->char_auto   );
+	    break;
+
+	case 'E':
+	    if ( !str_cmp( word, "End" ) )
+	    {
+		if ( !social->name )
+		{
+		    bugf( "Fread_social: Name not found" );
+		    free_social( social );
+		    return;
+		}
+		if ( !social->char_no_arg )
+		{
+		    bugf( "Fread_social: CharNoArg not found" );
+		    free_social( social );
+		    return;
+		}
+		add_social( social );
+		return;
+	    }
+	    break;
+
+	case 'N':
+	    SKEY( "Name", social->name );
+	    break;
+
+	case 'O':
+	    SKEY( "OthersNoArg", social->others_no_arg );
+	    SKEY( "OthersFound", social->others_found  );
+	    SKEY( "OthersAuto",	 social->others_auto   );
+	    break;
+
+	case 'V':
+	    SKEY( "VictFound", social->vict_found );
+	    break;
+	}
+	
+	if ( !fMatch )
+	{
+            bugf( "Fread_social: no match: %s. Skipping to next line.", word );
+	    fread_to_eol( fp );
+	}
+    }
+
+    return;
+}
+
+void load_socials( void )
+{
+    FILE *fp;
+    int   stat;
+    char  strsave [ MAX_INPUT_LENGTH ];
+
+    fclose( fpReserve );
+
+    sprintf( strsave, "%s%s", SYSTEM_DIR, SOCIAL_FILE );
+
+    if ( !( fp = fopen( strsave, "r" ) ) )
+    {
+	bug( "Cannot open SOCIALS.TXT", 0 );
+	exit( 0 );
+    }
+
+    for ( ; ; )
+    {
+	int   letter;
+	char *word;
+
+	letter = fread_letter( fp );
+
+	if ( letter == '*' )
+	{
+	    fread_to_eol( fp );
+	    continue;
+	}
+
+	if ( letter != '#' )
+	{
+	    bug( "Load_socials: # not found.", 0 );
+	    break;
+	}
+
+	word = fread_word( fp, &stat );
+	if ( !str_cmp( word, "SOCIAL" ) )
+	{
+	    fread_social( fp );
+	    continue;
+	}
+	else
+	if ( !str_cmp( word, "END" ) )
+	    break;
+	else
+	{
+	    bug( "Load_socials: bad section.", 0 );
+	    continue;
+	}
+    }
+    
+    fclose( fp );
+    fpReserve = fopen( NULL_FILE, "r" );
+    return;
+}
+
+
+
+/*
+ * Get pointer to clan structure from clan name. -Toric
+ */
+CLAN_DATA *get_clan( const char *name )
+{
+    CLAN_DATA *clan;
+    
+    for ( clan = clan_first; clan; clan = clan->next )
+       if ( !str_cmp( name, clan->name ) )
+         return clan;
+    return NULL;
+}
+
+/*
+ * New code for loading clans from file.
+ */
+bool fread_clan( CLAN_DATA *clan, FILE *fp )
+{
+    const char *word;
+    bool        fMatch;
+    int         stat;
+
+    for ( ; ; )
+    {
+    	GET_TOKEN( fp, word, "End" );
+	fMatch = FALSE;
+
+	switch ( UPPER( word[0] ) )
+	{
+	case '*':
+	    fMatch = TRUE;
+	    fread_to_eol( fp );
+	    break;
+
+	case 'C':
+            SKEY( "Chieftain",   clan->chieftain );
+             if ( !str_cmp( word, "Class" ) )
+             {
+		clan->cclass = class_lookup( temp_fread_string( fp, &stat ) );
+             	fMatch = TRUE;
+             	break;
+             }
+            KEY( "ClanHeros",    clan->clanheros, fread_number( fp, &stat ) );
+            KEY( "ClanType",     clan->clan_type, fread_number( fp, &stat ) );
+            KEY( "ClanObjOne",   clan->clanobj1,  fread_number( fp, &stat ) );
+            KEY( "ClanObjTwo",   clan->clanobj2,  fread_number( fp, &stat ) );
+            KEY( "ClanObjThree", clan->clanobj3,  fread_number( fp, &stat ) );
+	    break;
+
+	case 'D':
+            SKEY( "Desc",    clan->description );
+            KEY( "Donation", clan->donation,  fread_number( fp, &stat ) );
+	    break;
+
+	case 'E':
+	    if ( !str_cmp( word, "End" ) )
+		return TRUE;
+	    break;
+
+	case 'I':
+            KEY( "IllegalPK",   clan->illegal_pk,  fread_number( fp, &stat ) );
+	    break;
+
+	case 'M':
+            KEY( "Members",     clan->members, fread_number( fp, &stat ) );
+            KEY( "MKills",      clan->mkills,  fread_number( fp, &stat ) );
+            KEY( "MDeaths",     clan->mdeaths, fread_number( fp, &stat ) );
+            SKEY( "Motto",      clan->motto );
+	    break;
+
+	case 'N':
+            SKEY( "Name",      clan->name    );
+	    break;
+
+	case 'O':
+            SKEY( "Overlord", clan->overlord );
+	    break;
+
+	case 'P':
+            KEY( "PKills",  clan->pkills,  fread_number( fp, &stat ) );
+            KEY( "PDeaths", clan->pdeaths, fread_number( fp, &stat ) );
+	    break;
+
+	case 'R':
+            KEY( "Recall",  clan->recall,  fread_number( fp, &stat ) );
+	    break;
+
+	case 'S':
+            KEY( "Score",     clan->score,     fread_number( fp, &stat ) );
+            KEY( "Subchiefs", clan->subchiefs, fread_number( fp, &stat ) );
+	    break;
+
+	case 'W':
+            SKEY( "WhoName",   clan->who_name    );
+	    break;
+
+	}
+
+	if ( !fMatch )
+	{
+            bugf( "Load_clan_file: no match: %s", word );
+	}
+    }
+
+    return FALSE;
+}
+
+bool load_clan_file( char *filename )
+{
+    CLAN_DATA *clan;
+    FILE      *fp;
+    int        stat;
+    char       buf [ MAX_STRING_LENGTH ];
+
+    sprintf( buf, "%s%s", CLAN_DIR, filename );
+    if ( !( fp = fopen( buf, "r" ) ) )
+    {
+        perror( buf );
+        return FALSE;
+    }
+
+    clan = (CLAN_DATA *) alloc_mem ( sizeof( CLAN_DATA ) );
+    clan->filename = str_dup( filename );
+
+    for ( ; ; )
+    {
+	char *word;
+	int   letter;
+
+	letter = fread_letter( fp );
+	if ( letter == '*' )
+	{
+	    fread_to_eol( fp );
+	    continue;
+	}
+
+	if ( letter != '#' )
+	{
+	    bug( "Load_clan_file: # not found.", 0 );
+	    free_mem( clan, sizeof( CLAN_DATA ) );
+	    break;
+	}
+
+	word = fread_word( fp, &stat );
+
+	if ( !str_cmp( word, "CLAN" ) )
+	{
+	    fread_clan( clan, fp );
+
+	    if ( !clan_first )
+		clan_first	= clan;
+	    else
+		clan_last->next	= clan;
+	    clan->next		= NULL;
+	    clan_last		= clan;
+
+	    break;
+	}
+	else if ( !str_cmp( word, "END"  ) )				break;
+	else
+	{
+	    bugf( "Load_clan_file: bad section: %s.", word );
+	    free_mem( clan, sizeof( CLAN_DATA ) );
+	    break;
+	}
+    }
+    fclose( fp );
+
+    return TRUE;
+}
+
+/*
+ * Load in all the clan files.
+ */ 
+void load_clans( void )
+{
+    FILE       *fpList;
+    const char *filename;
+    char        fname		[ MAX_STRING_LENGTH ];
+    char        clanslist	[ MAX_STRING_LENGTH ];
+    int         stat;
+    
+    clan_first  = NULL;
+    clan_last   = NULL;
+
+    log_string( "Loading clans" );
+
+    sprintf( clanslist, "%s%s", CLAN_DIR, CLANS_LIST );
+    if ( !( fpList = fopen( clanslist, "r" ) ) )
+    {
+        perror( clanslist );
+        exit( 1 );
+    }
+
+    for ( ; ; )
+    {
+    	GET_TOKEN( fpList, filename, "$" );
+	strcpy( fname, filename );
+        if ( fname[0] == '$' )
+	    break;
+
+        if ( load_clan_file( fname ) )
+	    fputc( '.', stderr );
+	else
+	    bugf( "Cannot load clan file: %s", fname );
+
+    }
+    fclose( fpList );
+
+    fputc( '\n', stderr );
+    return;
+}
+
+void save_clan_list( void )
+{
+    FILE      *fp;
+    CLAN_DATA *clan;
+    char       clanslist	[ MAX_STRING_LENGTH ];
+
+    sprintf( clanslist, "%s%s", CLAN_DIR, CLANS_LIST );
+
+    fclose( fpReserve );
+
+    if ( !( fp = fopen( clanslist, "w" ) ) )
+    {
+        bug( "Save_clan_list: fopen", 0 );
+        perror( clanslist );
+	return;
+    }
+
+    for ( clan = clan_first; clan; clan = clan->next )
+	fprintf( fp, "%s\n", clan->filename );
+
+    fprintf( fp, "$\n" );
+    fclose( fp );
+
+    fpReserve = fopen( NULL_FILE, "r" );
+    return;
+}
+
+void clan_update( void )
+{
+    CLAN_DATA *clan;
+
+    for ( clan = clan_first; clan; clan = clan->next )
+	save_clan( clan );
+    return;
+}
+
+/*
+ * New code for writing a clan to a file.
+ */
+void save_clan( CLAN_DATA *clan )
+{
+    FILE                    *fp;
+    char                     buf	[ MAX_STRING_LENGTH ];
+
+    if ( !clan->filename )
+	return;
+    
+    sprintf( buf, "%s%s", CLAN_DIR, clan->filename );
+
+    fclose( fpReserve );
+
+    if ( !( fp = fopen( buf, "w" ) ) )
+    {
+        bugf( "Cannot open: %s for writing", clan->filename );
+    }
+    else
+    {
+	fprintf( fp, "#CLAN\n"						    );
+	fprintf( fp, "WhoName       %s~\n",        clan->who_name	    );
+	fprintf( fp, "Name          %s~\n",        clan->name		    );
+	fprintf( fp, "Motto         %s~\n",        clan->motto		    );
+	fprintf( fp, "Desc          %s~\n", fix_string( clan->description ) );
+	fprintf( fp, "Overlord      %s~\n",        clan->overlord	    );
+	fprintf( fp, "Chieftain     %s~\n",        clan->chieftain	    );
+	fprintf( fp, "PKills        %d\n",         clan->pkills		    );
+	fprintf( fp, "PDeaths       %d\n",         clan->pdeaths	    );
+	fprintf( fp, "MKills        %d\n",         clan->mkills		    );
+	fprintf( fp, "MDeaths       %d\n",         clan->mdeaths	    );
+	fprintf( fp, "IllegalPK     %d\n",         clan->illegal_pk	    );
+	fprintf( fp, "Score         %d\n",         clan->score		    );
+	fprintf( fp, "ClanType      %d\n",         clan->clan_type	    );
+	fprintf( fp, "Clanheros     %d\n",         clan->clanheros	    );
+	fprintf( fp, "Subchiefs     %d\n",         clan->subchiefs	    );
+	fprintf( fp, "Members       %d\n",         clan->members	    );
+	fprintf( fp, "ClanObjOne    %d\n",         clan->clanobj1	    );
+	fprintf( fp, "ClanObjTwo    %d\n",         clan->clanobj2	    );
+	fprintf( fp, "ClanObjThree  %d\n",         clan->clanobj3	    );
+	fprintf( fp, "Recall        %d\n",         clan->recall 	    );
+	fprintf( fp, "Donation      %d\n",         clan->donation	    );
+
+	if ( clan->cclass )
+	    fprintf( fp, "Class         %s~\n",    clan->cclass->name  	    );
+
+	fprintf( fp, "End\n"						    );
+	fprintf( fp, "#END\n"						    );
+
+	fclose( fp );
+    }
+
+    fpReserve = fopen( NULL_FILE, "r" );
+
+    return;
+}
+
+
+
+void do_makeclan( CHAR_DATA *ch, char *argument )
+{
+    CHAR_DATA *rch;
+    CLAN_DATA *clan;
+    char       filename [ MAX_STRING_LENGTH ];
+    char       who_name [ MAX_INPUT_LENGTH ];
+
+    rch = get_char( ch );
+
+    if ( !authorized( rch, "makeclan" ) )
+        return;
+
+    if ( argument[0] == '\0' )
+    {
+        send_to_char( "Syntax: makeclan <clan name>\n\r", ch );
+        return;
+    }
+
+    one_argument( argument, who_name );
+    who_name[14] = '\0';
+
+    sprintf( filename, "%s.cln", who_name );
+
+    clan = (CLAN_DATA *) alloc_mem ( sizeof( CLAN_DATA ) );
+    if ( !clan_first )
+    {
+	clan_first		= clan;
+    }
+    else
+    {
+	clan_last->next		= clan;
+    }
+    clan->next		= NULL;
+    clan_last		= clan;
+
+    clan->filename		= str_dup( filename );
+    clan->who_name		= str_dup( who_name );
+    clan->name			= str_dup( argument );
+    clan->motto			= str_dup( "" );
+    clan->description		= str_dup( "" );
+    clan->overlord		= str_dup( "" );
+    clan->chieftain		= str_dup( "" );
+    clan->subchiefs		= 0;
+    clan->clanheros		= 0;
+    clan->members		= 0;
+    clan->recall		= 3001;
+    clan->donation		= 0;
+    clan->cclass		= 0;
+    clan->mkills		= 0;
+    clan->mdeaths		= 0;
+    clan->pkills		= 0;
+    clan->pdeaths		= 0;
+    clan->illegal_pk		= 0;
+    clan->score			= 0;
+    clan->clan_type		= 0;
+    clan->clanobj1		= 0;
+    clan->clanobj2		= 0;
+    clan->clanobj3		= 0;
+
+    return;
+}
 
 
 
 
-const struct flag_type ac_type[] = {
-    {"pierce", AC_PIERCE, TRUE},
-    {"bash", AC_BASH, TRUE},
-    {"slash", AC_SLASH, TRUE},
-    {"exotic", AC_EXOTIC, TRUE},
-    {NULL, 0, 0}
-};
+/*
+ * Save a single board.
+ */
+void save_board( BOARD_DATA *board )
+{
+    FILE      *fp;
+    char       strsave	[ MAX_INPUT_LENGTH ];
+    NOTE_DATA *note;
+
+    fclose( fpReserve );
+
+    sprintf( strsave, "%s%s", NOTE_DIR, board->short_name );
+
+    if ( !( fp = fopen( strsave, "w" ) ) )
+    {
+	perror( board->short_name );
+    }
+    else
+    {
+	for ( note = board->note_first; note; note = note->next )
+	    append_note( fp, note );
+	fclose( fp );
+    }
+    fpReserve = fopen( NULL_FILE, "r" );
+    return;
+}
 
 
-const struct flag_type size_flags[] = {
-    {"tiny", SIZE_TINY, TRUE},
-    {"small", SIZE_SMALL, TRUE},
-    {"medium", SIZE_MEDIUM, TRUE},
-    {"large", SIZE_LARGE, TRUE},
-    {"huge", SIZE_HUGE, TRUE},
-    {"giant", SIZE_GIANT, TRUE},
-    {NULL, 0, 0},
-};
+
+/*
+ * Snarf a board.
+ */
+void load_board( BOARD_DATA *board )
+{
+    FILE      *fp;
+    FILE      *fpArch;
+    NOTE_DATA *pnotelast;
+    char       strsave	[ MAX_INPUT_LENGTH ];
+
+    sprintf( strsave, "%s%s", NOTE_DIR, board->short_name );
+
+    if ( !( fp = fopen( strsave, "r" ) ) )
+	return;	    
+    	    
+    pnotelast = NULL;
+    for ( ; ; )
+    {
+	NOTE_DATA *pnote;
+	int        letter;
+	int        stat;
+
+	do
+	{
+	    letter = getc( fp );
+	    if ( feof( fp ) )
+	    {
+		fclose( fp );
+		return;
+	    }
+	}
+	while ( isspace( letter ) );
+	ungetc( letter, fp );
+
+	pnote		  = (NOTE_DATA *) alloc_mem( sizeof( *pnote ) );
+
+	if ( str_cmp( fread_word( fp, &stat ), "sender" ) )
+	    break;
+	pnote->sender     = fread_string( fp, &stat );
+
+	if ( str_cmp( fread_word( fp, &stat ), "date" ) )
+	    break;
+	pnote->date       = fread_string( fp, &stat );
+
+	if ( str_cmp( fread_word( fp, &stat ), "stamp" ) )
+	    break;
+	pnote->date_stamp = fread_number( fp, &stat );
+
+	if ( str_cmp( fread_word( fp, &stat ), "expire" ) )
+	    break;
+	pnote->expire     = fread_number( fp, &stat );
+
+	if ( str_cmp( fread_word( fp, &stat ), "to" ) )
+	    break;
+	pnote->to_list    = fread_string( fp, &stat );
+
+	if ( str_cmp( fread_word( fp, &stat ), "subject" ) )
+	    break;
+	pnote->subject    = fread_string( fp, &stat );
+
+	if ( str_cmp( fread_word( fp, &stat ), "text" ) )
+	    break;
+	pnote->text       = fread_string( fp, &stat );
+
+	pnote->next = NULL;
 
 
-const struct flag_type weapon_class[] = {
-    {"exotic", WEAPON_EXOTIC, TRUE},
-    {"sword", WEAPON_SWORD, TRUE},
-    {"dagger", WEAPON_DAGGER, TRUE},
-    {"spear", WEAPON_SPEAR, TRUE},
-    {"mace", WEAPON_MACE, TRUE},
-    {"axe", WEAPON_AXE, TRUE},
-    {"flail", WEAPON_FLAIL, TRUE},
-    {"whip", WEAPON_WHIP, TRUE},
-    {"polearm", WEAPON_POLEARM, TRUE},
-    {NULL, 0, 0}
-};
+        /*
+	 * Should this note be archived right now?
+	 */
+        if ( pnote->expire < current_time )
+        {
+	    sprintf( strsave, "%s%s.old", NOTE_DIR, board->short_name );
+
+	    if ( !( fpArch = fopen( strsave, "a" ) ) )
+		bug( "Load_board: couldn't open arch boards for writing.", 0 );
+	    else
+	    {
+		append_note( fpArch, pnote );
+		fclose( fpArch );
+	    }
+
+	    free_note( pnote );
+	    board->changed = TRUE;
+	    continue;
+        }
+
+        if ( !board->note_first )
+	    board->note_first	= pnote;
+	else
+	    pnotelast->next	= pnote;
+
+        pnotelast		= pnote;
+    }
+
+    strcpy( strArea, board->short_name );
+    fpArea = fp;
+
+    bug( "Load_board: bad key word.", 0 );
+    return;
+}
 
 
-const struct flag_type weapon_type2[] = {
-    {"flaming", WEAPON_FLAMING, TRUE},
-    {"frost", WEAPON_FROST, TRUE},
-    {"vampiric", WEAPON_VAMPIRIC, TRUE},
-    {"sharp", WEAPON_SHARP, TRUE},
-    {"vorpal", WEAPON_VORPAL, TRUE},
-    {"twohands", WEAPON_TWO_HANDS, TRUE},
-    {"shocking", WEAPON_SHOCKING, TRUE},
-    {"poison", WEAPON_POISON, TRUE},
-    {NULL, 0, 0}
-};
 
-const struct flag_type res_flags[] = {
-    {"summon", RES_SUMMON, TRUE},
-    {"charm", RES_CHARM, TRUE},
-    {"magic", RES_MAGIC, TRUE},
-    {"weapon", RES_WEAPON, TRUE},
-    {"bash", RES_BASH, TRUE},
-    {"pierce", RES_PIERCE, TRUE},
-    {"slash", RES_SLASH, TRUE},
-    {"fire", RES_FIRE, TRUE},
-    {"cold", RES_COLD, TRUE},
-    {"lightning", RES_LIGHTNING, TRUE},
-    {"acid", RES_ACID, TRUE},
-    {"poison", RES_POISON, TRUE},
-    {"negative", RES_NEGATIVE, TRUE},
-    {"holy", RES_HOLY, TRUE},
-    {"energy", RES_ENERGY, TRUE},
-    {"mental", RES_MENTAL, TRUE},
-    {"disease", RES_DISEASE, TRUE},
-    {"drowning", RES_DROWNING, TRUE},
-    {"light", RES_LIGHT, TRUE},
-    {"sound", RES_SOUND, TRUE},
-    {"wood", RES_WOOD, TRUE},
-    {"silver", RES_SILVER, TRUE},
-    {"iron", RES_IRON, TRUE},
-    {NULL, 0, 0}
-};
+/*
+ * Initialize structures.  Load all boards.
+ */
+void load_notes( void )
+{
+    int i;
+
+    for ( i = 0; i < MAX_BOARD; i++ )
+	load_board( &board_table[i] );
+    return;
+}
 
 
-const struct flag_type vuln_flags[] = {
-    {"summon", VULN_SUMMON, TRUE},
-    {"charm", VULN_CHARM, TRUE},
-    {"magic", VULN_MAGIC, TRUE},
-    {"weapon", VULN_WEAPON, TRUE},
-    {"bash", VULN_BASH, TRUE},
-    {"pierce", VULN_PIERCE, TRUE},
-    {"slash", VULN_SLASH, TRUE},
-    {"fire", VULN_FIRE, TRUE},
-    {"cold", VULN_COLD, TRUE},
-    {"lightning", VULN_LIGHTNING, TRUE},
-    {"acid", VULN_ACID, TRUE},
-    {"poison", VULN_POISON, TRUE},
-    {"negative", VULN_NEGATIVE, TRUE},
-    {"holy", VULN_HOLY, TRUE},
-    {"energy", VULN_ENERGY, TRUE},
-    {"mental", VULN_MENTAL, TRUE},
-    {"disease", VULN_DISEASE, TRUE},
-    {"drowning", VULN_DROWNING, TRUE},
-    {"light", VULN_LIGHT, TRUE},
-    {"sound", VULN_SOUND, TRUE},
-    {"wood", VULN_WOOD, TRUE},
-    {"silver", VULN_SILVER, TRUE},
-    {"iron", VULN_IRON, TRUE},
-    {NULL, 0, 0}
-};
 
-const struct flag_type position_flags[] = {
-    {"dead", POS_DEAD, FALSE},
-    {"mortal", POS_MORTAL, FALSE},
-    {"incap", POS_INCAP, FALSE},
-    {"stunned", POS_STUNNED, FALSE},
-    {"sleeping", POS_SLEEPING, TRUE},
-    {"resting", POS_RESTING, TRUE},
-    {"sitting", POS_SITTING, TRUE},
-    {"fighting", POS_FIGHTING, FALSE},
-    {"standing", POS_STANDING, TRUE},
-    {NULL, 0, 0}
-};
+/*
+ * Save changed boards.
+ */
+void notes_update( void )
+{
+    int i;
 
-const struct flag_type portal_flags[] = {
-    {"normal_exit", GATE_NORMAL_EXIT, TRUE},
-    {"no_curse", GATE_NOCURSE, TRUE},
-    {"go_with", GATE_GOWITH, TRUE},
-    {"buggy", GATE_BUGGY, TRUE},
-    {"random", GATE_RANDOM, TRUE},
-    {NULL, 0, 0}
-};
-
-const struct flag_type furniture_flags[] = {
-    {"stand_at", STAND_AT, TRUE},
-    {"stand_on", STAND_ON, TRUE},
-    {"stand_in", STAND_IN, TRUE},
-    {"sit_at", SIT_AT, TRUE},
-    {"sit_on", SIT_ON, TRUE},
-    {"sit_in", SIT_IN, TRUE},
-    {"rest_at", REST_AT, TRUE},
-    {"rest_on", REST_ON, TRUE},
-    {"rest_in", REST_IN, TRUE},
-    {"sleep_at", SLEEP_AT, TRUE},
-    {"sleep_on", SLEEP_ON, TRUE},
-    {"sleep_in", SLEEP_IN, TRUE},
-    {"put_at", PUT_AT, TRUE},
-    {"put_on", PUT_ON, TRUE},
-    {"put_in", PUT_IN, TRUE},
-    {"put_inside", PUT_INSIDE, TRUE},
-    {NULL, 0, 0}
-};
-
-const struct flag_type apply_types[] = {
-    {"affects", TO_AFFECTS, TRUE},
-    {"object", TO_OBJECT, TRUE},
-    {"immune", TO_IMMUNE, TRUE},
-    {"resist", TO_RESIST, TRUE},
-    {"vuln", TO_VULN, TRUE},
-    {"weapon", TO_WEAPON, TRUE},
-    {NULL, 0, TRUE}
-};
-
-const struct bit_type bitvector_type[] = {
-    {affect_flags, "affect"},
-    {apply_flags, "apply"},
-    {imm_flags, "imm"},
-    {res_flags, "res"},
-    {vuln_flags, "vuln"},
-    {weapon_type2, "weapon"}
-};
+    for ( i = 0; i < MAX_BOARD; i++ )
+	if ( board_table[i].changed )	save_board( &board_table[i] );
+    return;
+}

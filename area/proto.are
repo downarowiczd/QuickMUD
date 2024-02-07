@@ -1,18 +1,12 @@
-#AREA	
-proto.are~
-protype~
-{ 5 35} Merc    Prototype for New Area~
-XX00 XX99
+#AREA	{ 5 50} Envy    Prototype for New Area~
+
+
+#RECALL
 
 
 
 #HELPS
 0 $~
-
-
-
-#SOCIALS
-#0
 
 
 
